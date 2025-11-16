@@ -1,0 +1,32 @@
+alloy:
+  configMap:
+    create: true
+    content: |-
+      // 发现 Kubernetes Pods
+      discovery.kubernetes "pods" {
+        role = "pod"
+        namespaces {
+          names = ["${PROJECT_NAME}"]
+        }
+      }
+
+      // 从发现的 Pods 中读取日志
+      loki.source.kubernetes "pods" {
+        targets    = discovery.kubernetes.pods.targets
+        forward_to = [loki.write.default.receiver]
+      }
+
+      // Loki 日志写入端点
+      loki.write "default" {
+        endpoint {
+          url = "http://loki:3100/loki/api/v1/push"
+        }
+      }
+
+  mounts:
+    # loki.source.kubernetes 需要访问 /var/log/pods
+    varlog: true
+    dockercontainers: false
+
+controller:
+  type: daemonset

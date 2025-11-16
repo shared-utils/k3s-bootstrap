@@ -1,0 +1,16 @@
+additionalArguments:
+  - --certificatesresolvers.cloudflare.acme.dnschallenge=true
+  - --certificatesresolvers.cloudflare.acme.dnschallenge.provider=cloudflare
+  - --certificatesresolvers.cloudflare.acme.email=admin@lengz.cc
+  - --certificatesresolvers.cloudflare.acme.storage=/data/acme.json
+
+persistence:
+  enabled: true
+  size: 1Gi
+
+env:
+  - name: CF_DNS_API_TOKEN
+    valueFrom:
+      secretKeyRef:
+        name: cf-tokens
+        key: dns_api
