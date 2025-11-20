@@ -87,26 +87,32 @@ install_k3s_and_merge_config() {
 
 install_k3s_and_merge_config
 
+
+ssh root@$NODE_IP "echo net.ipv4.ip_forward=1 | sudo tee /etc/sysctl.d/99-sysctl.conf >/dev/null && sudo sysctl -p /etc/sysctl.d/99-sysctl.conf"
+
+ssh root@$NODE_IP "cat <<EOF | sudo tee /etc/nftables.conf >/dev/null
+table ip nat {
+  chain postrouting {
+    type nat hook postrouting priority 100;
+    ip daddr { $POD_CIDR, $SERVICE_CIDR } iif != lo counter masquerade
+  }
+}
+EOF
+sudo nft -f /etc/nftables.conf && sudo systemctl enable --now nftables 2>/dev/null || true"
+
+
 # 切換到對應的 context
 kubectl config use-context $CLUSTER_NAME
 
 # cf tunnel
-kubectl create secret generic cf-tokens \
-  --from-literal=tunnel=$CF_TUNNEL_TOKEN \
-  --dry-run=client -o yaml | kubectl apply -f -
-kubectl apply -f cloudflared.yaml
+envsubst < cloudflared.yaml | kubectl apply -f -
 
 # treafik
-kubectl create secret generic cf-tokens -n kube-system \
-  --from-literal=dns_api=$CF_DNS_API_TOKEN \
-  --dry-run=client -o yaml | kubectl apply -f -
-
 helm repo add traefik https://traefik.github.io/charts
 helm repo update
-
-helm upgrade --install traefik traefik/traefik \
+envsubst < traefik-values.yaml | helm upgrade --install traefik traefik/traefik \
   --namespace kube-system \
-  --values traefik-values.yaml
+  --values -
 
 # dashboard
 kubectl create secret generic kubernetes-dashboard-csrf \
@@ -125,9 +131,10 @@ helm upgrade --install grafana grafana/grafana \
 envsubst < alloy-values.yaml | helm upgrade --install alloy grafana/alloy \
   -n monitor -f -
 
-# nats nui
-helm repo add nats-nui https://nats-nui.github.io/k8s/helm/charts
-envsubst < nats-nui-values.yaml | helm upgrade --install -n monitor nats-nui nats-nui/nui -f -
+# # nats nui
+# helm repo add nats-nui https://nats-nui.github.io/k8s/helm/charts
+# envsubst < nats-nui-values.yaml | helm upgrade --install -n monitor nats-nui nats-nui/nui -f -
 
-# etcd-workbench
-envsubst < etcd-workbench.yaml | kubectl apply -n monitor -f -
+# # etcd-workbench
+# envsubst < etcd-workbench.yaml | kubectl apply -n monitor -f -
+
