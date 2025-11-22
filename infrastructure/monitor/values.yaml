@@ -80,21 +80,20 @@ grafana:
 # Alloy Configuration
 alloy:
   # Custom config content (optional)
-  # If set, this will be used directly instead of generating config from namespaces
-  # Set via: --set alloy.config="discovery.kubernetes \"pods\" { ... }"
+  # Used by our template to generate config
   config: ""
   
   # Namespaces to collect logs from (used when config is empty)
-  # Set via: --set alloy.namespaces[0]=myproject --set alloy.namespaces[1]=another-ns
-  # Or in values.yaml: namespaces: ["myproject", "another-ns"]
+  # Used by our template to generate config
+  # Set via: --set alloy.namespaces[0]=myproject
   namespaces: []
   
   # 以下配置会直接传递给 alloy chart
-  configMap:
-    # Disable alloy chart's ConfigMap creation (default is true)
-    # Our template creates the ConfigMap with name: <release-name>-alloy
-    # This matches the default name alloy chart expects, so no need to set configMap.name
-    create: false
+  alloy:
+    configMap:
+      # Disable alloy chart's ConfigMap creation
+      # Our template creates the ConfigMap
+      create: false
 
   mounts:
     # loki.source.kubernetes 需要访问 /var/log/pods
