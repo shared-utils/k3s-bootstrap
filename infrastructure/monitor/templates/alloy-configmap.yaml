@@ -16,7 +16,7 @@ metadata:
     meta.helm.sh/release-name: {{ .Release.Name }}
     meta.helm.sh/release-namespace: {{ .Release.Namespace }}
 data:
-  config.river: |-
+  config.alloy: |-
 {{- if .Values.alloy.config }}
 {{ .Values.alloy.config | indent 4 }}
 {{- else }}
@@ -25,8 +25,8 @@ data:
       namespaces {
 {{- if .Values.alloy.namespaces }}
         names = [
-{{- range $index, $ns := .Values.alloy.namespaces }}
-          "{{ $ns }}"{{- if ne $index (sub (len $.Values.alloy.namespaces) 1) }},{{- end }}
+{{- range .Values.alloy.namespaces }}
+          "{{ . }}",
 {{- end }}
         ]
 {{- else }}
