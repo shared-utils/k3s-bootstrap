@@ -139,5 +139,10 @@ envsubst < dashboard.yaml | kubectl apply -f -
 # argocd
 helm repo add argo https://argoproj.github.io/argo-helm
 helm repo update
+
+ARGOCD_ADMIN_PASSWORD=$(htpasswd -nbBC 10 "" "aa456123" | tr -d ':\n' | sed 's/$2y/$2a/')
+
 envsubst < argocd-values.yaml | helm upgrade --install argocd argo/argo-cd \
-  -n argocd --create-namespace -f -
+  -n argocd --create-namespace \
+  --set configs.secret.argocdServerAdminPassword="$ARGOCD_ADMIN_PASSWORD" \
+  -f -

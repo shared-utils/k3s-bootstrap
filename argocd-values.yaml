@@ -57,10 +57,6 @@ configs:
       g, anonymous, role:anonymous
     # Set default role to anonymous
     policy.default: role:anonymous
-  
-  secret:
-    # Fixed admin password: aa456123
-    argocdServerAdminPassword: "$2a$10$RsMqHOFozUuTAooOO9jqheHESFNEkkEEv51mt6U5H79tnJMcwMYX6"
 
 certificate:
   enabled: false
