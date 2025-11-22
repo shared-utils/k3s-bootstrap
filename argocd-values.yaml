@@ -1,0 +1,83 @@
+global:
+  domain: argocd.$DOMAIN
+
+configs:
+  cm:
+    # Enable anonymous access
+    accounts.anonymous.enabled: "true"
+    accounts.anonymous.capabilities: "login"
+    
+    # Keep admin enabled for initial access (can be disabled later if needed)
+    # admin.enabled: "false"
+    
+    # Application settings
+    # Allow applications to be created in any namespace
+    application.namespaces: "*"
+    
+    # Enable application status reporting
+    application.status.sync.enabled: "true"
+  params:
+    server.insecure: true
+    server.url: https://argocd.$DOMAIN
+  rbac:
+    # RBAC policy for anonymous users
+    # Allow anonymous users to create, update, delete applications
+    policy.csv: |
+      # Allow anonymous users full access to applications
+      p, role:anonymous, applications, create, */*, allow
+      p, role:anonymous, applications, get, */*, allow
+      p, role:anonymous, applications, update, */*, allow
+      p, role:anonymous, applications, delete, */*, allow
+      p, role:anonymous, applications, sync, */*, allow
+      p, role:anonymous, applications, action/*, */*, allow
+      
+      # Allow anonymous users to manage projects
+      p, role:anonymous, projects, create, *, allow
+      p, role:anonymous, projects, get, *, allow
+      p, role:anonymous, projects, update, *, allow
+      p, role:anonymous, projects, delete, *, allow
+      
+      # Allow anonymous users to manage repositories
+      p, role:anonymous, repositories, create, *, allow
+      p, role:anonymous, repositories, get, *, allow
+      p, role:anonymous, repositories, update, *, allow
+      p, role:anonymous, repositories, delete, *, allow
+      
+      # Allow anonymous users to manage clusters
+      p, role:anonymous, clusters, create, *, allow
+      p, role:anonymous, clusters, get, *, allow
+      p, role:anonymous, clusters, update, *, allow
+      p, role:anonymous, clusters, delete, *, allow
+      
+      # Allow anonymous users to view logs and exec
+      p, role:anonymous, logs, get, */*, allow
+      p, role:anonymous, exec, create, */*, allow
+      
+      # Grant anonymous role to anonymous users
+      g, anonymous, role:anonymous
+    # Set default role to anonymous
+    policy.default: role:anonymous
+  
+  secret:
+    # Fixed admin password: aa456123
+    argocdServerAdminPassword: "$2a$10$RsMqHOFozUuTAooOO9jqheHESFNEkkEEv51mt6U5H79tnJMcwMYX6"
+
+certificate:
+  enabled: false
+
+server:
+  ingress:
+    enabled: true
+    ingressClassName: traefik
+    hostname: argocd.$DOMAIN
+    annotations:
+      traefik.ingress.kubernetes.io/router.tls.certresolver: cloudflare
+      traefik.ingress.kubernetes.io/router.entrypoints: websecure
+      traefik.ingress.kubernetes.io/router.tls: "true"
+  insecure: true
+
+dex:
+  enabled: false
+
+redis:
+  enabled: true

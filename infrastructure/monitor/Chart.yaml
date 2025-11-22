@@ -1,0 +1,19 @@
+apiVersion: v2
+name: monitor
+description: Monitoring stack with Grafana, Loki, and Alloy
+version: 1.0.0
+type: application
+
+dependencies:
+  - name: loki
+    version: "*"
+    repository: https://grafana.github.io/helm-charts
+  
+  - name: grafana
+    version: "*"
+    repository: https://grafana.github.io/helm-charts
+  
+  - name: alloy
+    version: "*"
+    repository: https://grafana.github.io/helm-charts
+

@@ -1,0 +1,106 @@
+
+# Loki Configuration
+loki:
+  deploymentMode: SingleBinary
+
+  loki:
+    auth_enabled: false
+    commonConfig:
+      replication_factor: 1
+    storage:
+      type: filesystem
+    schemaConfig:
+      configs:
+        - from: "2024-01-01"
+          store: tsdb
+          object_store: filesystem
+          schema: v13
+          index:
+            prefix: index_
+            period: 24h
+
+  singleBinary:
+    replicas: 1
+    persistence:
+      enabled: true
+      size: 50Gi
+
+  # 禁用不需要的組件
+  gateway:
+    enabled: false
+
+  test:
+    enabled: false
+
+  read:
+    replicas: 0
+
+  write:
+    replicas: 0
+
+  backend:
+    replicas: 0
+
+# Grafana Configuration
+grafana:
+  grafana.ini:
+    auth:
+      disable_login_form: true
+    auth.anonymous:
+      enabled: true
+      org_role: Admin
+
+  service:
+    type: ClusterIP
+    port: 80
+
+  ingress:
+    enabled: true
+    ingressClassName: traefik
+    annotations:
+      traefik.ingress.kubernetes.io/router.tls.certresolver: cloudflare
+      traefik.ingress.kubernetes.io/router.entrypoints: websecure
+      traefik.ingress.kubernetes.io/router.tls: "true"
+    path: /
+    pathType: Prefix
+    hosts: []
+
+  datasources:
+    datasources.yaml:
+      apiVersion: 1
+      datasources:
+        - name: Loki
+          type: loki
+          access: proxy
+          url: http://loki:3100
+          isDefault: true
+          jsonData:
+            maxLines: 1000
+
+# Alloy Configuration
+alloy:
+  # Custom config content (optional)
+  # If set, this will be used directly instead of generating config from namespaces
+  # Set via: --set alloy.config="discovery.kubernetes \"pods\" { ... }"
+  config: ""
+  
+  # Namespaces to collect logs from (used when config is empty)
+  # Set via: --set alloy.namespaces[0]=myproject --set alloy.namespaces[1]=another-ns
+  # Or in values.yaml: namespaces: ["myproject", "another-ns"]
+  namespaces: []
+  
+  # 以下配置会直接传递给 alloy chart
+  configMap:
+    # Disable alloy chart's ConfigMap creation (default is true)
+    # Our template creates the ConfigMap with name: <release-name>-alloy
+    # This matches the default name alloy chart expects, so no need to set configMap.name
+    create: false
+
+  mounts:
+    # loki.source.kubernetes 需要访问 /var/log/pods
+    varlog: true
+    dockercontainers: false
+
+  controller:
+    type: daemonset
+

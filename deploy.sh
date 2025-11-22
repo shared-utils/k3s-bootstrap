@@ -120,21 +120,24 @@ kubectl create secret generic kubernetes-dashboard-csrf \
   --dry-run=client -o yaml | kubectl apply -f -
 envsubst < dashboard.yaml | kubectl apply -f -
 
-# monitor
-helm repo add grafana https://grafana.github.io/helm-charts
-helm repo update
-helm upgrade --install loki grafana/loki \
-  -n monitor --create-namespace -f loki-values.yaml
-helm upgrade --install grafana grafana/grafana \
-  -n monitor -f grafana-values.yaml \
-  --set ingress.hosts[0]=monitor.$DOMAIN
-envsubst < alloy-values.yaml | helm upgrade --install alloy grafana/alloy \
-  -n monitor -f -
+# # monitor
+# helm dependency update infrastructure/monitor
+# helm upgrade --install monitor infrastructure/monitor \
+#   -n monitor --create-namespace \
+#   --set "grafana.ingress.hosts[0]=monitor.$DOMAIN" \
+#   --set "alloy.namespaces[0]=$PROJECT_NAME"
 
 # # nats nui
 # helm repo add nats-nui https://nats-nui.github.io/k8s/helm/charts
 # envsubst < nats-nui-values.yaml | helm upgrade --install -n monitor nats-nui nats-nui/nui -f -
 
 # # etcd-workbench
-# envsubst < etcd-workbench.yaml | kubectl apply -n monitor -f -
+# helm upgrade --install etcd-workbench infrastructure/etcd-workbench \
+#   -n monitor --create-namespace \
+#   --set "ingress.host=etcd.$DOMAIN"
 
+# argocd
+helm repo add argo https://argoproj.github.io/argo-helm
+helm repo update
+envsubst < argocd-values.yaml | helm upgrade --install argocd argo/argo-cd \
+  -n argocd --create-namespace -f -

@@ -1,0 +1,47 @@
+# Alloy ConfigMap - always created by our template
+# If alloy.config is set, use it directly; otherwise generate from alloy.namespaces
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-alloy
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: alloy
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: alloy
+    app.kubernetes.io/part-of: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    # Ensure Helm manages this resource
+    meta.helm.sh/release-name: {{ .Release.Name }}
+    meta.helm.sh/release-namespace: {{ .Release.Namespace }}
+data:
+  config.river: |-
+{{- if .Values.alloy.config }}
+{{ .Values.alloy.config | indent 4 }}
+{{- else }}
+    discovery.kubernetes "pods" {
+      role = "pod"
+      namespaces {
+{{- if .Values.alloy.namespaces }}
+        names = [
+{{- range $index, $ns := .Values.alloy.namespaces }}
+          "{{ $ns }}"{{- if ne $index (sub (len $.Values.alloy.namespaces) 1) }},{{- end }}
+{{- end }}
+        ]
+{{- else }}
+        # If names is empty or not specified, alloy will collect from all namespaces
+        names = []
+{{- end }}
+      }
+    }
+    loki.source.kubernetes "pods" {
+      targets    = discovery.kubernetes.pods.targets
+      forward_to = [loki.write.default.receiver]
+    }
+    loki.write "default" {
+      endpoint {
+        url = "http://loki:3100/loki/api/v1/push"
+      }
+    }
+{{- end }}

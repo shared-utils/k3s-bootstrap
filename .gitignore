@@ -10,3 +10,7 @@
 # macOS
 .DS_Store
 
+# Helm chart dependencies (downloaded by helm dependency update)
+# ArgoCD will automatically download dependencies when syncing
+**/charts/*.tgz
+**/charts/*.tar.gz
