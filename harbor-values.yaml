@@ -1,0 +1,31 @@
+expose:
+  type: ingress
+  tls:
+    enabled: true
+    certSource: none
+  ingress:
+    className: traefik
+    hosts:
+      core: harbor.$DOMAIN
+    annotations:
+      traefik.ingress.kubernetes.io/router.tls.certresolver: cloudflare
+      traefik.ingress.kubernetes.io/router.entrypoints: websecure
+
+externalURL: https://harbor.$DOMAIN
+
+harborAdminPassword: ${HARBOR_ADMIN_PASSWORD}
+
+persistence:
+  enabled: true
+  persistentVolumeClaim:
+    registry:
+      size: 50Gi
+
+chartmuseum:
+  enabled: false
+
+trivy:
+  enabled: false
+
+notary:
+  enabled: false

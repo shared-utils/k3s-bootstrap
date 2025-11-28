@@ -120,22 +120,6 @@ kubectl create secret generic kubernetes-dashboard-csrf \
   --dry-run=client -o yaml | kubectl apply -f -
 envsubst < dashboard.yaml | kubectl apply -f -
 
-# # monitor
-# helm dependency update infrastructure/monitor
-# helm upgrade --install monitor infrastructure/monitor \
-#   -n monitor --create-namespace \
-#   --set "grafana.ingress.hosts[0]=monitor.$DOMAIN" \
-#   --set "alloy.namespaces[0]=$PROJECT_NAME"
-
-# # nats nui
-# helm repo add nats-nui https://nats-nui.github.io/k8s/helm/charts
-# envsubst < nats-nui-values.yaml | helm upgrade --install -n monitor nats-nui nats-nui/nui -f -
-
-# # etcd-workbench
-# helm upgrade --install etcd-workbench infrastructure/etcd-workbench \
-#   -n monitor --create-namespace \
-#   --set "ingress.host=etcd.$DOMAIN"
-
 # argocd
 helm repo add argo https://argoproj.github.io/argo-helm
 helm repo update
@@ -146,3 +130,30 @@ envsubst < argocd-values.yaml | helm upgrade --install argocd argo/argo-cd \
   -n argocd --create-namespace \
   --set configs.secret.argocdServerAdminPassword="$ARGOCD_ADMIN_PASSWORD" \
   -f -
+
+# harbor
+echo ""
+read -p "是否安裝 Harbor 鏡像倉庫？(y/N): " install_harbor
+if [ "$install_harbor" = "y" ] || [ "$install_harbor" = "Y" ]; then
+  helm repo add harbor https://helm.goharbor.io
+  helm repo update
+
+  # 生成 Harbor 密碼（如果未設置則使用預設密碼）
+  export HARBOR_ADMIN_PASSWORD=${HARBOR_ADMIN_PASSWORD:-"aa456123"}
+
+  envsubst < harbor-values.yaml | helm upgrade --install harbor harbor/harbor \
+    --namespace harbor --create-namespace \
+    --values - \
+    --wait --timeout=10m
+
+  echo ""
+  echo "======================================"
+  echo "Harbor 部署完成"
+  echo "======================================"
+  echo "訪問地址: https://harbor.$DOMAIN"
+  echo "用戶名: admin"
+  echo "密碼: $HARBOR_ADMIN_PASSWORD"
+  echo "======================================"
+else
+  echo "已跳過 Harbor 安裝"
+fi
