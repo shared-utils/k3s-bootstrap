@@ -1,0 +1,9 @@
+storage:
+  size: 10Gi
+  # storageClassName: ""  # 使用默认 StorageClass
+
+# 认证配置（留空则无需认证）
+auth:
+  root:
+    username: root
+    password: ""
