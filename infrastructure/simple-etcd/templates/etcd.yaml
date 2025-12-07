@@ -1,0 +1,91 @@
+{{- $name := .Release.Name -}}
+{{- $namespace := .Release.Namespace -}}
+{{- $replicas := int .Values.replicas -}}
+{{- $clusterDomain := .Values.cluster.domain -}}
+{{- $headlessSvc := printf "%s-headless.%s.svc.%s" $name $namespace $clusterDomain -}}
+{{- $peers := list -}}
+{{- range $i := until $replicas -}}
+{{- $peers = append $peers (printf "%s-%d=http://%s-%d.%s:2380" $name $i $name $i $headlessSvc) -}}
+{{- end -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+spec:
+  ports:
+    - port: 2379
+      targetPort: 2379
+      name: client
+  selector:
+    app: {{ $name }}
+---
+# Headless Service：用于 Pod 间互相发现
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}-headless
+spec:
+  clusterIP: None
+  ports:
+    - port: 2379
+      name: client
+    - port: 2380
+      name: peer
+  selector:
+    app: {{ $name }}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ $name }}
+spec:
+  serviceName: {{ $name }}-headless
+  replicas: {{ $replicas }}
+  selector:
+    matchLabels:
+      app: {{ $name }}
+  template:
+    metadata:
+      labels:
+        app: {{ $name }}
+    spec:
+      containers:
+        - name: etcd
+          image: "gcr.io/etcd-development/etcd:v{{ .Chart.AppVersion }}"
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: HEADLESS_FQDN
+              value: {{ $headlessSvc }}
+            - name: INITIAL_CLUSTER
+              value: {{ join "," $peers }}
+          command:
+            - /usr/local/bin/etcd
+          args:
+            - --name=$(POD_NAME)
+            - --data-dir=/etcd-data
+            - --listen-client-urls=http://0.0.0.0:2379
+            - --advertise-client-urls=http://$(POD_NAME).$(HEADLESS_FQDN):2379
+            - --listen-peer-urls=http://0.0.0.0:2380
+            - --initial-advertise-peer-urls=http://$(POD_NAME).$(HEADLESS_FQDN):2380
+            - --initial-cluster=$(INITIAL_CLUSTER)
+            - --initial-cluster-state=new
+            - --initial-cluster-token={{ $name }}
+          ports:
+            - containerPort: 2379
+              name: client
+            - containerPort: 2380
+              name: peer
+          volumeMounts:
+            - name: data
+              mountPath: /etcd-data
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: {{ .Values.storage.size }}

@@ -1,0 +1,9 @@
+# 节点数量：1 = 单节点，3 = 高可用（推荐奇数：1, 3, 5）
+replicas: 1
+
+storage:
+  size: 5Gi
+  # storageClassName: ""  # 使用默认 StorageClass
+
+cluster:
+  domain: cluster.local

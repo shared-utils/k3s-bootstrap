@@ -1,0 +1,5 @@
+apiVersion: v2
+name: simple-etcd
+description: A minimal single-node etcd deployment with persistence
+version: 0.1.0
+appVersion: "3.6.6"
