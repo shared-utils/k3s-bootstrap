@@ -2,11 +2,11 @@ storage:
   size: 10Gi
   # storageClassName: ""  # 使用默认 StorageClass
 
-# 认证配置（留空则无需认证）
+# 认证配置
 auth:
-  root:
-    username: root
-    password: ""
+  username: postgres
+  password: ""      # 留空则使用 trust 认证（仅限开发环境）
+  database: ""      # 留空则使用默认数据库（与用户名相同）
 
 # 资源限制（可选）
 # resources:
@@ -16,3 +16,4 @@ auth:
 #   limits:
 #     memory: "1Gi"
 #     cpu: "500m"
+
