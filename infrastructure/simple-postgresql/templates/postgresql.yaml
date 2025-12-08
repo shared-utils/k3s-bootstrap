@@ -7,30 +7,31 @@ metadata:
 data:
   init.sql: |
     {{- range .Values.databases }}
-    -- 創建用戶 {{ .user }}
+    {{- $user := .user | default .name }}
+    -- 創建用戶 {{ $user }}
     DO $$
     BEGIN
-      IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = '{{ .user }}') THEN
+      IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = '{{ $user }}') THEN
         {{- if .password }}
-        CREATE USER {{ .user }} WITH PASSWORD '{{ .password }}';
+        CREATE USER {{ $user }} WITH PASSWORD '{{ .password }}';
         {{- else }}
-        CREATE USER {{ .user }};
+        CREATE USER {{ $user }};
         {{- end }}
       END IF;
     END
     $$;
 
     -- 創建資料庫 {{ .name }}
-    SELECT 'CREATE DATABASE {{ .name }} OWNER {{ .user }}'
+    SELECT 'CREATE DATABASE {{ .name }} OWNER {{ $user }}'
     WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '{{ .name }}')\gexec
 
     -- 賦予權限
-    GRANT ALL PRIVILEGES ON DATABASE {{ .name }} TO {{ .user }};
+    GRANT ALL PRIVILEGES ON DATABASE {{ .name }} TO {{ $user }};
     \c {{ .name }}
-    GRANT ALL ON SCHEMA public TO {{ .user }};
-    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO {{ .user }};
-    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO {{ .user }};
-    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON FUNCTIONS TO {{ .user }};
+    GRANT ALL ON SCHEMA public TO {{ $user }};
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO {{ $user }};
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO {{ $user }};
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON FUNCTIONS TO {{ $user }};
     {{- end }}
 ---
 {{- end }}

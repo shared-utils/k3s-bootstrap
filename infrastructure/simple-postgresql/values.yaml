@@ -9,14 +9,14 @@ auth:
 
 # 初始化資料庫和用戶（可選，支援多個）
 # 每個條目會創建資料庫、用戶，並賦予該用戶對應資料庫的全部權限
-# password 留空則創建無密碼用戶（僅限開發環境）
+# - user 可選，默認等於 name
+# - password 留空則創建無密碼用戶（僅限開發環境）
 # databases:
-#   - name: myapp
-#     user: myapp_user
-#     password: myapp_password
-#   - name: devdb
-#     user: devuser
-#     password: ""            # 無密碼
+#   - name: myapp                 # user 默認 = myapp
+#     password: secret
+#   - name: another
+#     user: custom_user           # 明確指定不同的 user
+#     password: secret2
 
 # 資源限制（可選）
 # resources:
