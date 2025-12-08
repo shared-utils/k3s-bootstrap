@@ -1,14 +1,24 @@
 storage:
   size: 10Gi
-  # storageClassName: ""  # 使用默认 StorageClass
+  # storageClassName: ""  # 使用預設 StorageClass
 
-# 认证配置
+# 超級用戶認證配置
 auth:
   username: postgres
-  password: ""      # 留空则使用 trust 认证（仅限开发环境）
-  database: ""      # 留空则使用默认数据库（与用户名相同）
+  password: ""      # 留空則使用 trust 認證（僅限開發環境）
 
-# 资源限制（可选）
+# 初始化資料庫和用戶（可選，支援多個）
+# 每個條目會創建資料庫、用戶，並賦予該用戶對應資料庫的全部權限
+# password 留空則創建無密碼用戶（僅限開發環境）
+# databases:
+#   - name: myapp
+#     user: myapp_user
+#     password: myapp_password
+#   - name: devdb
+#     user: devuser
+#     password: ""            # 無密碼
+
+# 資源限制（可選）
 # resources:
 #   requests:
 #     memory: "256Mi"
